@@ -4,6 +4,7 @@ pluginManagement {
         maven { url 'https://dl.bintray.com/kotlin/kotlinx' }
         maven { url 'https://dl.bintray.com/kotlin/kotlin-eap' }
         gradlePluginPortal()
+        mavenLocal()
     }
 }
 
@@ -13,6 +14,3 @@ rootProject.name = 'Kotlin-DateTime-library'
 
 include ':core'
 project(":core").name='kotlinx-datetime'
-
-include ':darwin-integration'
-project(":darwin-integration").name='kotlinx-datetime-darwin'

@@ -26,18 +26,35 @@ val JDK_8: String by project
 //}
 
 kotlin {
+//    infra {
+//        target("macosX64")
+//        target("iosX64")
+//        target("iosArm64")
+//        target("iosArm32")
+//        target("linuxX64")
+//        target("mingwX64")
+//        target("watchosArm32")
+//        target("watchosArm64")
+//        target("watchosX86")
+//        target("tvosArm64")
+//        target("tvosX64")
+//    }
+
     infra {
-        target("macosX64")
-        target("iosX64")
-        target("iosArm64")
-        target("iosArm32")
         target("linuxX64")
         target("mingwX64")
-        target("watchosArm32")
-        target("watchosArm64")
-        target("watchosX86")
-        target("tvosArm64")
-        target("tvosX64")
+
+        common("darwin") {
+            target("macosX64")
+            target("iosX64")
+            target("iosArm64")
+            target("iosArm32")
+            target("watchosArm32")
+            target("watchosArm64")
+            target("watchosX86")
+            target("tvosArm64")
+            target("tvosX64")
+        }
     }
 
     jvm {
@@ -114,6 +131,7 @@ kotlin {
     }
 
     sourceSets.all {
+        println("SOURCE_SET: $name")
         kotlin.setSrcDirs(listOf("$name/src"))
         resources.setSrcDirs(listOf("$name/resources"))
         languageSettings.apply {
@@ -180,6 +198,12 @@ kotlin {
         }
 
         val nativeTest by getting {
+        }
+
+        val darwinMain by getting {
+        }
+
+        val darwinTest by getting {
         }
     }
 }

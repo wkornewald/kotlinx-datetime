@@ -9,16 +9,12 @@ buildscript {
 }
 
 plugins {
-    id("kotlinx.team.infra") version "0.1.0-dev-51"
+    id("kotlinx.team.infra") version "0.1.0"
 }
 
 project(":kotlinx-datetime") {
     pluginManager.apply("kotlin-multiplatform")
 //    pluginManager.apply("maven-publish")
-}
-
-project(":kotlinx-datetime-darwin") {
-    pluginManager.apply("kotlin-multiplatform")
 }
 
 infra {
@@ -28,7 +24,6 @@ infra {
     }
     publishing {
         include(":kotlinx-datetime")
-        include(":kotlinx-datetime-darwin")
 
         bintray {
             organization = "kotlin"
