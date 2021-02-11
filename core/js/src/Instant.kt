@@ -6,15 +6,12 @@
 package kotlinx.datetime
 
 import kotlinx.datetime.internal.JSJoda.ZonedDateTime
-import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
-import kotlin.time.nanoseconds
-import kotlin.time.seconds
 import kotlinx.datetime.internal.JSJoda.Instant as jtInstant
 import kotlinx.datetime.internal.JSJoda.Duration as jtDuration
 import kotlinx.datetime.internal.JSJoda.Clock as jtClock
 import kotlinx.datetime.internal.JSJoda.ChronoUnit
 import kotlin.math.truncate
+import kotlin.time.*
 
 @OptIn(ExperimentalTime::class)
 public actual class Instant internal constructor(internal val value: jtInstant) : Comparable<Instant> {
@@ -48,7 +45,7 @@ public actual class Instant internal constructor(internal val value: jtInstant) 
 
     actual operator fun minus(other: Instant): Duration {
         val diff = jtDuration.between(other.value, this.value)
-        return diff.seconds().toDouble().seconds + diff.nano().toDouble().nanoseconds
+        return diff.seconds().toDouble() * Duration.SECOND + diff.nano().toDouble() * Duration.NANOSECOND
     }
 
     public actual override operator fun compareTo(other: Instant): Int = this.value.compareTo(other.value).toInt()
@@ -188,7 +185,7 @@ public actual fun Instant.periodUntil(other: Instant, timeZone: TimeZone): DateT
 
     val months = thisZdt.until(otherZdt, ChronoUnit.MONTHS).toDouble(); thisZdt = thisZdt.plusMonths(months)
     val days = thisZdt.until(otherZdt, ChronoUnit.DAYS).toDouble(); thisZdt = thisZdt.plusDays(days) as ZonedDateTime
-    val time = thisZdt.until(otherZdt, ChronoUnit.NANOS).toDouble().nanoseconds
+    val time = thisZdt.until(otherZdt, ChronoUnit.NANOS).toDouble() * Duration.NANOSECOND
 
     time.toComponents { hours, minutes, seconds, nanoseconds ->
         return DateTimePeriod((months / 12).toInt(), (months % 12).toInt(), days.toInt(), hours, minutes, seconds.toLong(), nanoseconds.toLong())

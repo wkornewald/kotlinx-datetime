@@ -39,8 +39,8 @@ public actual class Instant internal constructor(internal val value: jtInstant) 
     actual operator fun minus(duration: Duration): Instant = plus(-duration)
 
     actual operator fun minus(other: Instant): Duration =
-            (this.value.epochSecond - other.value.epochSecond).seconds + // won't overflow given the instant bounds
-            (this.value.nano - other.value.nano).nanoseconds
+            (this.value.epochSecond - other.value.epochSecond) * Duration.SECOND + // won't overflow given the instant bounds
+            (this.value.nano - other.value.nano) * Duration.NANOSECOND
 
     public actual override operator fun compareTo(other: Instant): Int = this.value.compareTo(other.value)
 
@@ -149,7 +149,7 @@ public actual fun Instant.periodUntil(other: Instant, timeZone: TimeZone): DateT
 
     val months = thisZdt.until(otherZdt, ChronoUnit.MONTHS); thisZdt = thisZdt.plusMonths(months)
     val days = thisZdt.until(otherZdt, ChronoUnit.DAYS); thisZdt = thisZdt.plusDays(days)
-    val time = thisZdt.until(otherZdt, ChronoUnit.NANOS).nanoseconds
+    val time = thisZdt.until(otherZdt, ChronoUnit.NANOS) * Duration.NANOSECOND
 
     time.toComponents { hours, minutes, seconds, nanoseconds ->
         return DateTimePeriod((months / 12).toInt(), (months % 12).toInt(), days.toInt(), hours, minutes, seconds.toLong(), nanoseconds.toLong())
