@@ -13,6 +13,7 @@ import kotlin.test.*
 class TimeZoneTest {
 
     @Test
+    @Suppress("DEPRECATION") // FixedOffsetTimeZone.offsetAt
     fun utc() {
         val utc: FixedOffsetTimeZone = TimeZone.UTC
         println(utc)

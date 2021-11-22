@@ -27,9 +27,6 @@ public actual class LocalDateTime internal constructor(
     public actual companion object {
         public actual fun parse(isoString: String): LocalDateTime =
             localDateTimeParser.parse(isoString)
-
-        internal actual val MIN: LocalDateTime = LocalDateTime(LocalDate.MIN, LocalTime.MIN)
-        internal actual val MAX: LocalDateTime = LocalDateTime(LocalDate.MAX, LocalTime.MAX)
     }
 
     public actual constructor(year: Int, monthNumber: Int, dayOfMonth: Int, hour: Int, minute: Int, second: Int, nanosecond: Int) :

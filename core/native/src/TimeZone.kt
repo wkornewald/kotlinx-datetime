@@ -113,9 +113,6 @@ public actual class FixedOffsetTimeZone internal constructor(public actual val o
 
     public actual constructor(offset: UtcOffset) : this(offset, offset.toString())
 
-    @Deprecated("Use offset.totalSeconds", ReplaceWith("offset.totalSeconds"))
-    public actual val totalSeconds: Int get() = offset.totalSeconds
-
     override fun atStartOfDay(date: LocalDate): Instant =
         LocalDateTime(date, LocalTime.MIN).toInstant(offset)
 

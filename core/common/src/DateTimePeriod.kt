@@ -11,23 +11,66 @@ import kotlin.math.*
 import kotlin.time.Duration
 import kotlinx.serialization.Serializable
 
+/**
+ * A difference between two [instants][Instant], decomposed into date and time units.
+ *
+ * See [DatePeriod] for a special case that only stores date units.
+ * A [DatePeriod] is automatically returned from all constructor functions for [DateTimePeriod] if it turns out that
+ * the time components are zero.
+ */
 @Serializable(with = DateTimePeriodIso8601Serializer::class)
 // TODO: could be error-prone without explicitly named params
 public sealed class DateTimePeriod {
     internal abstract val totalMonths: Int
+
+    /**
+     * The number of days.
+     *
+     * We do not consider a day to be equal to 24 hours. Please see [DateTimeUnit.DAY] for a discussion.
+     */
     public abstract val days: Int
+
     internal abstract val totalNanoseconds: Long
 
+    /**
+     * The number of whole years.
+     */
     public val years: Int get() = totalMonths / 12
+
+    /**
+     * The number of months in this period that don't form a whole year, so this value is always in `(-11..11)`.
+     */
     public val months: Int get() = totalMonths % 12
+
+    /**
+     * The number of whole hours in this period.
+     */
     public open val hours: Int get() = (totalNanoseconds / 3_600_000_000_000).toInt()
+
+    /**
+     * The number of whole minutes in this period that don't form a whole hour, so this value is always in `(-59..59)`.
+     */
     public open val minutes: Int get() = ((totalNanoseconds % 3_600_000_000_000) / 60_000_000_000).toInt()
+
+    /**
+     * The number of whole seconds in this period that don't form a whole minute, so this value is always in `(-59..59)`.
+     */
     public open val seconds: Int get() = ((totalNanoseconds % 60_000_000_000) / NANOS_PER_ONE).toInt()
+
+    /**
+     * The number of whole nanoseconds in this period that don't form a whole second, so this value is always in
+     * `(-999_999_999..999_999_999)`.
+     */
     public open val nanoseconds: Int get() = (totalNanoseconds % NANOS_PER_ONE).toInt()
 
     private fun allNonpositive() =
         totalMonths <= 0 && days <= 0 && totalNanoseconds <= 0 && (totalMonths or days != 0 || totalNanoseconds != 0L)
 
+    /**
+     * Converts this period to the ISO-8601 string representation for durations.
+     *
+     * @see DateTimePeriod.parse
+     */
     override fun toString(): String = buildString {
         val sign = if (allNonpositive()) { append('-'); -1 } else 1
         append('P')
@@ -39,11 +82,13 @@ public sealed class DateTimePeriod {
         if (minutes != 0) append(t).append(minutes * sign).append('M').also { t = "" }
         if (seconds or nanoseconds != 0) {
             append(t)
-            append(when {
-                seconds != 0 -> seconds * sign
-                nanoseconds * sign < 0 -> "-0"
-                else -> "0"
-            })
+            append(
+                when {
+                    seconds != 0 -> seconds * sign
+                    nanoseconds * sign < 0 -> "-0"
+                    else -> "0"
+                }
+            )
             if (nanoseconds != 0) append('.').append((nanoseconds.absoluteValue).toString().padStart(9, '0'))
             append('S')
         }
@@ -70,9 +115,25 @@ public sealed class DateTimePeriod {
     }
 
     public companion object {
+        /**
+         * Parses a ISO-8601 duration string as a [DateTimePeriod].
+         * If the time components are absent or equal to zero, returns a [DatePeriod].
+         *
+         * Additionally, we support the `W` signifier to represent weeks.
+         *
+         * Examples of durations in the ISO-8601 format:
+         * - `P1Y40D` is one year and 40 days
+         * - `-P1DT1H` is minus (one day and one hour)
+         * - `P1DT-1H` is one day minus one hour
+         * - `-PT0.000000001S` is minus one nanosecond
+         *
+         * @throws IllegalArgumentException if the text cannot be parsed or the boundaries of [DateTimePeriod] are
+         * exceeded.
+         */
         public fun parse(text: String): DateTimePeriod {
             fun parseException(message: String, position: Int): Nothing =
                 throw DateTimeFormatException("Parse error at char $position: $message")
+
             val START = 0
             val AFTER_P = 1
             val AFTER_YEAR = 2
@@ -104,7 +165,10 @@ public sealed class DateTimePeriod {
                         parseException("Unexpected end of input; at least one time component is required after 'T'", i)
                     val daysTotal = when (val n = days.toLong() + weeks * 7) {
                         in Int.MIN_VALUE..Int.MAX_VALUE -> n.toInt()
-                        else -> parseException("The total number of days under 'D' and 'W' designators should fit into an Int", 0)
+                        else -> parseException(
+                            "The total number of days under 'D' and 'W' designators should fit into an Int",
+                            0
+                        )
                     }
                     return DateTimePeriod(years, months, daysTotal, hours, minutes, seconds, nanoseconds.toLong())
                 }
@@ -119,7 +183,9 @@ public sealed class DateTimePeriod {
                                 parseException("Expected 'P', got '${text[i + 1]}'", i + 1)
                             i += 2
                         }
-                        'P' -> { i += 1 }
+                        'P' -> {
+                            i += 1
+                        }
                         else -> parseException("Expected '+', '-', 'P', got '${text[i]}'", i)
                     }
                     state = AFTER_P
@@ -134,7 +200,7 @@ public sealed class DateTimePeriod {
                         if (i >= text.length || text[i] !in '0'..'9')
                             parseException("A number expected after '${text[i]}'", i)
                     }
-                    in '0'..'9' -> { }
+                    in '0'..'9' -> {}
                     'T' -> {
                         if (state >= AFTER_T)
                             parseException("Only one 'T' designator is allowed", i)
@@ -155,10 +221,15 @@ public sealed class DateTimePeriod {
                 number *= localSign
                 if (i == text.length)
                     parseException("Expected a designator after the numerical value", i)
-                val wrongOrder = "Wrong component order: should be 'Y', 'M', 'W', 'D', then designator 'T', then 'H', 'M', 'S'"
+                val wrongOrder =
+                    "Wrong component order: should be 'Y', 'M', 'W', 'D', then designator 'T', then 'H', 'M', 'S'"
+
                 fun Long.toIntThrowing(component: Char): Int {
                     if (this < Int.MIN_VALUE || this > Int.MAX_VALUE)
-                        parseException("Value $this does not fit into an Int, which is required for component '$component'", iStart)
+                        parseException(
+                            "Value $this does not fit into an Int, which is required for component '$component'",
+                            iStart
+                        )
                     return toInt()
                 }
                 when (text[i].uppercaseChar()) {
@@ -219,6 +290,8 @@ public sealed class DateTimePeriod {
                             parseException("Only the nanosecond fractions of a second are supported", iStartFraction)
                         val fractionalPart = text.substring(iStartFraction, i) + "0".repeat(9 - fractionLength)
                         nanoseconds = fractionalPart.toInt(10) * localSign
+                        /* TODO: the ISO specifies that "the lowest order component" may have a decimal fraction
+                            (5.5.2.3). Does this mean that minutes can have fractions? Can days? Need to investigate. */
                         if (text[i] != 'S')
                             parseException("Expected the 'S' designator after a fraction", i)
                         if (state >= AFTER_SECOND_AND_NANO || state < AFTER_T)
@@ -229,11 +302,20 @@ public sealed class DateTimePeriod {
                     else -> parseException("Expected a designator after the numerical value", i)
                 }
                 i += 1
-           }
+            }
         }
     }
 }
 
+/**
+ * Parses the ISO-8601 duration representation as a [DateTimePeriod].
+ *
+ * See [DateTimePeriod.parse] for examples.
+ *
+ * @throws IllegalArgumentException if the text cannot be parsed or the boundaries of [DateTimePeriod] are exceeded.
+ *
+ * @see DateTimePeriod.parse
+ */
 public fun String.toDateTimePeriod(): DateTimePeriod = DateTimePeriod.parse(this)
 
 @Serializable(with = DatePeriodIso8601Serializer::class)
@@ -241,15 +323,34 @@ public class DatePeriod internal constructor(
     internal override val totalMonths: Int,
     override val days: Int,
 ) : DateTimePeriod() {
-    public constructor(years: Int = 0, months: Int = 0, days: Int = 0): this(totalMonths(years, months), days)
+    public constructor(years: Int = 0, months: Int = 0, days: Int = 0) : this(totalMonths(years, months), days)
     // avoiding excessive computations
+    /** The constant 0. */
     override val hours: Int get() = 0
+
+    /** The constant 0. */
     override val minutes: Int get() = 0
+
+    /** The constant 0. */
     override val seconds: Int get() = 0
+
+    /** The constant 0. */
     override val nanoseconds: Int get() = 0
+
     internal override val totalNanoseconds: Long get() = 0
 
     public companion object {
+        /**
+         * Parses the ISO-8601 duration representation as a [DatePeriod].
+         *
+         * This function is equivalent to [DateTimePeriod.parse], but will fail if any of the time components are not
+         * zero.
+         *
+         * @throws IllegalArgumentException if the text cannot be parsed, the boundaries of [DatePeriod] are exceeded,
+         * or any time components are not zero.
+         *
+         * @see DateTimePeriod.parse
+         */
         public fun parse(text: String): DatePeriod =
             when (val period = DateTimePeriod.parse(text)) {
                 is DatePeriod -> period
@@ -258,6 +359,17 @@ public class DatePeriod internal constructor(
     }
 }
 
+/**
+ * Parses the ISO-8601 duration representation as a [DatePeriod].
+ *
+ * This function is equivalent to [DateTimePeriod.parse], but will fail if any of the time components are not
+ * zero.
+ *
+ * @throws IllegalArgumentException if the text cannot be parsed, the boundaries of [DatePeriod] are exceeded,
+ * or any time components are not zero.
+ *
+ * @see DateTimePeriod.parse
+ */
 public fun String.toDatePeriod(): DatePeriod = DatePeriod.parse(this)
 
 private class DateTimePeriodImpl(
@@ -295,6 +407,19 @@ internal fun buildDateTimePeriod(totalMonths: Int = 0, days: Int = 0, totalNanos
     else
         DatePeriod(totalMonths, days)
 
+/**
+ * Constructs a new [DateTimePeriod]. If all the time components are zero, returns a [DatePeriod].
+ *
+ * It is recommended to always explicitly name the arguments when constructing this manually,
+ * like `DateTimePeriod(years = 1, months = 12)`.
+ *
+ * The passed numbers are not stored as is but are normalized instead for human readability, so, for example,
+ * `DateTimePeriod(months = 24)` becomes `DateTimePeriod(years = 2)`.
+ *
+ * @throws IllegalArgumentException if the total number of months in [years] and [months] overflows an [Int].
+ * @throws IllegalArgumentException if the total number of months in [hours], [minutes], [seconds] and [nanoseconds]
+ * overflows a [Long].
+ */
 public fun DateTimePeriod(
     years: Int = 0,
     months: Int = 0,
@@ -303,17 +428,36 @@ public fun DateTimePeriod(
     minutes: Int = 0,
     seconds: Int = 0,
     nanoseconds: Long = 0
-): DateTimePeriod = buildDateTimePeriod(totalMonths(years, months), days,
-    totalNanoseconds(hours, minutes, seconds, nanoseconds))
+): DateTimePeriod = buildDateTimePeriod(
+    totalMonths(years, months), days,
+    totalNanoseconds(hours, minutes, seconds, nanoseconds)
+)
 
+/**
+ * Constructs a [DateTimePeriod] from a [Duration].
+ *
+ * If the duration is too long to be represented as a [Long] number of nanoseconds,
+ * the result will be [Long.MAX_VALUE] nanoseconds.
+ */
+// TODO: maybe it's more consistent to throw here on overflow?
 public fun Duration.toDateTimePeriod(): DateTimePeriod = buildDateTimePeriod(totalNanoseconds = inWholeNanoseconds)
 
+/**
+ * Adds two [DateTimePeriod] instances.
+ *
+ * @throws DateTimeArithmeticException if arithmetic overflow happens.
+ */
 public operator fun DateTimePeriod.plus(other: DateTimePeriod): DateTimePeriod = buildDateTimePeriod(
     safeAdd(totalMonths, other.totalMonths),
     safeAdd(days, other.days),
     safeAdd(totalNanoseconds, other.totalNanoseconds),
 )
 
+/**
+ * Adds two [DatePeriod] instances.
+ *
+ * @throws DateTimeArithmeticException if arithmetic overflow happens.
+ */
 public operator fun DatePeriod.plus(other: DatePeriod): DatePeriod = DatePeriod(
     safeAdd(totalMonths, other.totalMonths),
     safeAdd(days, other.days),

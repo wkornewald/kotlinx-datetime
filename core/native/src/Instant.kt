@@ -117,14 +117,14 @@ private val instantParser: Parser<Instant>
 /**
  * The minimum supported epoch second.
  */
-private const val MIN_SECOND = -31619119219200L // -1000000-01-01T00:00:00Z
+internal const val MIN_SECOND = -31619119219200L // -1000000-01-01T00:00:00Z
 
 /**
  * The maximum supported epoch second.
  */
-private const val MAX_SECOND = 31494816403199L // +1000000-12-31T23:59:59
+internal const val MAX_SECOND = 31494816403199L // +1000000-12-31T23:59:59
 
-private fun isValidInstantSecond(second: Long) = second >= MIN_SECOND && second <= MAX_SECOND
+private fun isValidInstantSecond(second: Long) = second in MIN_SECOND..MAX_SECOND
 
 internal expect fun currentTime(): Instant
 
@@ -186,12 +186,9 @@ public actual class Instant internal constructor(public actual val epochSeconds:
         (epochSeconds xor (epochSeconds ushr 32)).toInt() + 51 * nanosecondsOfSecond
 
     // org.threeten.bp.format.DateTimeFormatterBuilder.InstantPrinterParser#print
-    actual override fun toString(): String = toStringWithOffset(UtcOffset.ZERO)
+    actual override fun toString(): String = toString(UtcOffset.ZERO)
 
     public actual companion object {
-        internal actual val MIN = Instant(MIN_SECOND, 0)
-        internal actual val MAX = Instant(MAX_SECOND, 999_999_999)
-
         @Deprecated("Use Clock.System.now() instead", ReplaceWith("Clock.System.now()", "kotlinx.datetime.Clock"), level = DeprecationLevel.ERROR)
         public actual fun now(): Instant = currentTime()
 
@@ -298,9 +295,9 @@ public actual fun Instant.plus(value: Long, unit: DateTimeUnit.TimeBased): Insta
             plus(seconds, nanoseconds)
         }
     } catch (e: ArithmeticException) {
-        if (value > 0) Instant.MAX else Instant.MIN
+        if (value > 0) MAX else MIN
     } catch (e: IllegalArgumentException) {
-        if (value > 0) Instant.MAX else Instant.MIN
+        if (value > 0) MAX else MIN
     }
 
 public actual fun Instant.periodUntil(other: Instant, timeZone: TimeZone): DateTimePeriod {
@@ -327,7 +324,7 @@ public actual fun Instant.until(other: Instant, unit: DateTimeUnit, timeZone: Ti
         }
     }
 
-internal actual fun Instant.toStringWithOffset(offset: UtcOffset): String {
+internal fun Instant.toString(offset: UtcOffset): String {
     val buf = StringBuilder()
     val inNano: Int = nanosecondsOfSecond
     val seconds = epochSeconds + offset.totalSeconds
@@ -389,3 +386,9 @@ internal actual fun Instant.toStringWithOffset(offset: UtcOffset): String {
     buf.append(offset)
     return buf.toString()
 }
+
+@SharedImmutable
+private val MIN = Instant(MIN_SECOND, 0)
+
+@SharedImmutable
+private val MAX = Instant(MAX_SECOND, 999_999_999)

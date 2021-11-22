@@ -19,11 +19,11 @@ internal class ZonedDateTime(val dateTime: LocalDateTime, private val zone: Time
     private fun LocalDateTime.resolve(): ZonedDateTime =
         // workaround for https://github.com/Kotlin/kotlinx-datetime/issues/51
         if (this@resolve.toInstant(offset).toLocalDateTime(zone) == this@resolve) {
-            // this LocalDateTime is valid in these timezone and offset.
+            // this LocalDateTime is valid in this timezone-offset combination.
             ZonedDateTime(this, zone, offset)
         } else {
-            // this LDT does need proper resolving, as the instant that it would map to given the preferred offset
-            // is is mapped to another LDT.
+            // this LDT does need proper resolving, as the instant that it would map to, given the preferred offset,
+            // is mapped to another LDT.
             zone.atZone(this, offset)
         }
 

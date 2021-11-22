@@ -110,9 +110,6 @@ public actual class Instant internal constructor(internal val value: jtInstant) 
 
         public actual val DISTANT_PAST: Instant = Instant(jtInstant.ofEpochSecond(DISTANT_PAST_SECONDS, 999_999_999))
         public actual val DISTANT_FUTURE: Instant = Instant(jtInstant.ofEpochSecond(DISTANT_FUTURE_SECONDS, 0))
-
-        internal actual val MIN: Instant = Instant(jtInstant.MIN)
-        internal actual val MAX: Instant = Instant(jtInstant.MAX)
     }
 }
 
@@ -187,7 +184,7 @@ public actual fun Instant.plus(value: Long, unit: DateTimeUnit.TimeBased): Insta
         if (!e.isJodaDateTimeException()) {
             throw e
         }
-        if (value > 0) Instant.MAX else Instant.MIN
+        if (value > 0) MAX else MIN
     }
 
 public actual fun Instant.periodUntil(other: Instant, timeZone: TimeZone): DateTimePeriod = try {
@@ -217,5 +214,5 @@ public actual fun Instant.until(other: Instant, unit: DateTimeUnit, timeZone: Ti
     if (e.isJodaDateTimeException()) throw DateTimeArithmeticException(e) else throw e
 }
 
-internal actual fun Instant.toStringWithOffset(offset: UtcOffset): String =
-    jtOffsetDateTime.ofInstant(this.value, offset.zoneOffset).toString()
+private val MIN: Instant = Instant(jtInstant.MIN)
+private val MAX: Instant = Instant(jtInstant.MAX)

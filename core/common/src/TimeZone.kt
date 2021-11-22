@@ -11,6 +11,9 @@ package kotlinx.datetime
 import kotlinx.datetime.serializers.*
 import kotlinx.serialization.Serializable
 
+/**
+ * A time zone, which is a collection of rules specifying which [LocalDateTime] values correspond to each [Instant].
+ */
 @Serializable(with = TimeZoneSerializer::class)
 public expect open class TimeZone {
     /**
@@ -56,7 +59,7 @@ public expect open class TimeZone {
     }
 
     /**
-     * Return a civil date/time value that this instant has in the time zone provided as an implicit receiver.
+     * Return the civil date/time value that this instant has in the time zone provided as an implicit receiver.
      *
      * Note that while this conversion is unambiguous, the inverse ([LocalDateTime.toInstant])
      * is not necessary so.
@@ -84,16 +87,28 @@ public expect open class TimeZone {
     public fun LocalDateTime.toInstant(): Instant
 }
 
+/**
+ * A time zone that is known to always have the same offset from UTC.
+ */
 @Serializable(with = FixedOffsetTimeZoneSerializer::class)
 public expect class FixedOffsetTimeZone : TimeZone {
     public constructor(offset: UtcOffset)
-    public val offset: UtcOffset
 
-    @Deprecated("Use offset.totalSeconds", ReplaceWith("offset.totalSeconds"))
-    public val totalSeconds: Int
+    /**
+     * The constant offset from UTC that this time zone has.
+     */
+    public val offset: UtcOffset
 }
 
-@Deprecated("Use FixedOffsetTimeZone of UtcOffset instead", ReplaceWith("FixedOffsetTimeZone"))
+@Deprecated("Use offset.totalSeconds", ReplaceWith("offset.totalSeconds"))
+public val FixedOffsetTimeZone.totalSeconds: Int
+    get() = offset.totalSeconds
+
+@Deprecated("The offset is known to be constant", ReplaceWith("offset"))
+@Suppress("UNUSED_PARAMETER")
+public fun FixedOffsetTimeZone.offsetAt(instant: Instant): UtcOffset = offset
+
+@Deprecated("Use FixedOffsetTimeZone or UtcOffset instead", ReplaceWith("FixedOffsetTimeZone"))
 public typealias ZoneOffset = FixedOffsetTimeZone
 
 /**
@@ -105,7 +120,7 @@ public typealias ZoneOffset = FixedOffsetTimeZone
 public expect fun TimeZone.offsetAt(instant: Instant): UtcOffset
 
 /**
- * Return a civil date/time value that this instant has in the specified [timeZone].
+ * Returns a civil date/time value that this instant has in the specified [timeZone].
  *
  * Note that while this conversion is unambiguous, the inverse ([LocalDateTime.toInstant])
  * is not necessary so.
@@ -116,8 +131,13 @@ public expect fun TimeZone.offsetAt(instant: Instant): UtcOffset
  */
 public expect fun Instant.toLocalDateTime(timeZone: TimeZone): LocalDateTime
 
+/**
+ * Returns a civil date/time value that this instant has in the specified [UTC offset][offset].
+ *
+ * @see LocalDateTime.toInstant
+ * @see Instant.offsetIn
+ */
 internal expect fun Instant.toLocalDateTime(offset: UtcOffset): LocalDateTime
-
 
 /**
  * Finds the offset from UTC the specified [timeZone] has at this instant of physical time.
@@ -144,6 +164,11 @@ public fun Instant.offsetIn(timeZone: TimeZone): UtcOffset =
  */
 public expect fun LocalDateTime.toInstant(timeZone: TimeZone): Instant
 
+/**
+ * Returns an instant that corresponds to this civil date/time value in the specified [UTC offset][offset].
+ *
+ * @see Instant.toLocalDateTime
+ */
 public expect fun LocalDateTime.toInstant(offset: UtcOffset): Instant
 
 /**

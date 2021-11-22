@@ -20,9 +20,6 @@ public actual class LocalDate internal constructor(internal val value: jtLocalDa
         } catch (e: DateTimeParseException) {
             throw DateTimeFormatException(e)
         }
-
-        internal actual val MIN: LocalDate = LocalDate(jtLocalDate.MIN)
-        internal actual val MAX: LocalDate = LocalDate(jtLocalDate.MAX)
     }
 
     public actual constructor(year: Int, monthNumber: Int, dayOfMonth: Int) :
@@ -114,10 +111,10 @@ public actual fun LocalDate.until(other: LocalDate, unit: DateTimeUnit.DateBased
 }
 
 public actual fun LocalDate.daysUntil(other: LocalDate): Int =
-        this.value.until(other.value, ChronoUnit.DAYS).clampToInt()
+    this.value.until(other.value, ChronoUnit.DAYS).clampToInt()
 
 public actual fun LocalDate.monthsUntil(other: LocalDate): Int =
-        this.value.until(other.value, ChronoUnit.MONTHS).clampToInt()
+    this.value.until(other.value, ChronoUnit.MONTHS).clampToInt()
 
 public actual fun LocalDate.yearsUntil(other: LocalDate): Int =
-        this.value.until(other.value, ChronoUnit.YEARS).clampToInt()
+    this.value.until(other.value, ChronoUnit.YEARS).clampToInt()

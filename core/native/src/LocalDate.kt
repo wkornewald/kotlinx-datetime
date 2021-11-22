@@ -34,7 +34,7 @@ internal const val YEAR_MIN = -999_999
 internal const val YEAR_MAX = 999_999
 
 private fun isValidYear(year: Int): Boolean =
-    year >= YEAR_MIN && year <= YEAR_MAX
+    year in YEAR_MIN..YEAR_MAX
 
 @Serializable(with = LocalDateIso8601Serializer::class)
 public actual class LocalDate actual constructor(public actual val year: Int, public actual val monthNumber: Int, public actual val dayOfMonth: Int) : Comparable<LocalDate> {
@@ -42,8 +42,8 @@ public actual class LocalDate actual constructor(public actual val year: Int, pu
     init {
         // org.threeten.bp.LocalDate#create
         require(isValidYear(year)) { "Invalid date: the year is out of range" }
-        require(monthNumber >= 1 && monthNumber <= 12) { "Invalid date: month must be a number between 1 and 12, got $monthNumber" }
-        require(dayOfMonth >= 1 && dayOfMonth <= 31) { "Invalid date: day of month must be a number between 1 and 31, got $dayOfMonth" }
+        require(monthNumber in 1..12) { "Invalid date: month must be a number between 1 and 12, got $monthNumber" }
+        require(dayOfMonth in 1..31) { "Invalid date: day of month must be a number between 1 and 31, got $dayOfMonth" }
         if (dayOfMonth > 28 && dayOfMonth > monthNumber.monthLength(isLeapYear(year))) {
             if (dayOfMonth == 29) {
                 throw IllegalArgumentException("Invalid date 'February 29' as '$year' is not a leap year")
@@ -65,13 +65,12 @@ public actual class LocalDate actual constructor(public actual val year: Int, pu
          */
         internal fun ofEpochDay(epochDay: Int): LocalDate {
             // LocalDate(-999999, 1, 1).toEpochDay(), LocalDate(999999, 12, 31).toEpochDay()
-            // Unidiomatic code due to https://github.com/Kotlin/kotlinx-datetime/issues/5
-            require(epochDay >= MIN_EPOCH_DAY && epochDay <= MAX_EPOCH_DAY) {
+            require(epochDay in MIN_EPOCH_DAY..MAX_EPOCH_DAY) {
                 "Invalid date: boundaries of LocalDate exceeded"
             }
             var zeroDay = epochDay + DAYS_0000_TO_1970
             // find the march-based year
-            zeroDay -= 60 // adjust to 0000-03-01 so leap day is at end of four year cycle
+            zeroDay -= 60 // adjust to 0000-03-01 so leap day is at end of four-year cycle
 
             var adjust = 0
             if (zeroDay < 0) { // adjust negative years to positive for calculation
@@ -98,11 +97,8 @@ public actual class LocalDate actual constructor(public actual val year: Int, pu
             return LocalDate(yearEst, month, dom)
         }
 
-        internal actual val MIN = LocalDate(YEAR_MIN, 1, 1)
-        internal actual val MAX = LocalDate(YEAR_MAX, 12, 31)
-
-        internal const val MIN_EPOCH_DAY = -365961662
-        internal const val MAX_EPOCH_DAY = 364522971
+        private const val MIN_EPOCH_DAY = -365961662
+        private const val MAX_EPOCH_DAY = 364522971
     }
 
     // org.threeten.bp.LocalDate#toEpochDay

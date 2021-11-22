@@ -52,9 +52,6 @@ public actual class LocalDateTime internal constructor(internal val value: jtLoc
             if (e.isJodaDateTimeParseException()) throw DateTimeFormatException(e)
             throw e
         }
-
-        internal actual val MIN: LocalDateTime = LocalDateTime(jtLocalDateTime.MIN)
-        internal actual val MAX: LocalDateTime = LocalDateTime(jtLocalDateTime.MAX)
     }
 
 }

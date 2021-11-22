@@ -174,8 +174,8 @@ class InstantTest {
         expectBetween(instant1, instant4, 4, DateTimeUnit.QUARTER)
         expectBetween(instant1, instant4, 14, DateTimeUnit.MONTH)
         expectBetween(instant1, instant4, 61, DateTimeUnit.WEEK)
-        expectBetween(instant1, instant4, 366 + 31 + 30, DateTimeUnit.DAY)
-        expectBetween(instant1, instant4, (366 + 31 + 30) * 24 + 1, DateTimeUnit.HOUR)
+        expectBetween(instant1, instant4, 366L + 31 + 30, DateTimeUnit.DAY)
+        expectBetween(instant1, instant4, (366L + 31 + 30) * 24 + 1, DateTimeUnit.HOUR)
         assertEquals(instant1.plus(DateTimeUnit.HOUR), instant4.minus(14, DateTimeUnit.MONTH, zone))
 
         val period = DateTimePeriod(days = 1, hours = 1)

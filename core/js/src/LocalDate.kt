@@ -19,9 +19,6 @@ public actual class LocalDate internal constructor(internal val value: jtLocalDa
             if (e.isJodaDateTimeParseException()) throw DateTimeFormatException(e)
             throw e
         }
-
-        internal actual val MIN: LocalDate = LocalDate(jtLocalDate.MIN)
-        internal actual val MAX: LocalDate = LocalDate(jtLocalDate.MAX)
     }
 
     public actual constructor(year: Int, monthNumber: Int, dayOfMonth: Int) :

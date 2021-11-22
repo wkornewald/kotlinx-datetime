@@ -66,11 +66,7 @@ private val ZoneId.isFixedOffset: Boolean
 @Serializable(with = FixedOffsetTimeZoneSerializer::class)
 public actual class FixedOffsetTimeZone
 internal constructor(public actual val offset: UtcOffset, zoneId: ZoneId): TimeZone(zoneId) {
-
     public actual constructor(offset: UtcOffset) : this(offset, offset.zoneOffset)
-
-    @Deprecated("Use offset.totalSeconds", ReplaceWith("offset.totalSeconds"))
-    public actual val totalSeconds: Int get() = offset.totalSeconds
 }
 
 public actual fun TimeZone.offsetAt(instant: Instant): UtcOffset =
