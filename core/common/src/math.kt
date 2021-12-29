@@ -5,6 +5,8 @@
 
 package kotlinx.datetime
 
+import kotlin.math.absoluteValue
+
 internal fun Long.clampToInt(): Int =
         when {
             this > Int.MAX_VALUE -> Int.MAX_VALUE
@@ -20,6 +22,12 @@ internal expect fun safeMultiply(a: Long, b: Long): Long
 internal expect fun safeMultiply(a: Int, b: Int): Int
 internal expect fun safeAdd(a: Long, b: Long): Long
 internal expect fun safeAdd(a: Int, b: Int): Int
+
+/** Formats this integer to the given length, padding with leading 0s. */
+internal fun Int.formatLen(length: Int): String {
+    val value = absoluteValue.toString().padStart(length, '0')
+    return if (this < 0) "-$value" else value
+}
 
 /** Multiplies two non-zero long values. */
 internal fun safeMultiplyOrZero(a: Long, b: Long): Long {
